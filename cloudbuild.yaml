@@ -87,7 +87,7 @@ steps:
         gcloud container images list-tags $(cat image_repo.txt) --filter="tags=$(cat image_tag.txt)" --format="get(tags)" > image_found.txt
         cat image_found.txt
     else
-        echo "Skipping further steps because branch $BRANCH_NAME is not master."
+        echo "Skipping further steps because the branch $BRANCH_NAME is not master."
     fi
 
 # Get the credentials for Docker so we can push the container image there.
