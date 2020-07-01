@@ -30,7 +30,7 @@ steps:
 # Determine if an image has already been created with this tag,
 # but only if we're merging into the master branch.
 - id: 'Search if Tag Exists'
-  name: 'curlimages/curl'
+  name: 'carinadigital/docker-ls'
   entrypoint: 'sh'
   args: 
   - '-c'
@@ -38,13 +38,8 @@ steps:
     #if test "$BRANCH_NAME" = "master"
     if test "$BRANCH_NAME" = "feature-branch"
     then 
-        #DOCKER_USER=$(cat tmp/docker_user.txt)
-        #DOCKER_PWD=$(cat tmp/docker_pwd.txt)
-        #curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/
-        #TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-        curl --silent https://hub.docker.com/v2/repositories/$(cat image_repo.txt)/tags/$(cat image_tag.txt) -o tags.json
-        jq -r .name tags.json > image_found.txt
-        cat image_found.txt
+        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" --basic-auth $(cat image_repo.txt)
+        #cat image_found.txt
     else
         echo "Skipping further steps because the branch $BRANCH_NAME is not master."
     fi
