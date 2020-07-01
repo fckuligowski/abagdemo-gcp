@@ -41,7 +41,7 @@ steps:
         cat tmp/docker_user.txt
         cat tmp/docker_pwd.txt
         echo 
-        docker-ls tags --user $(cat tmp/docker_user.txt) --password $(cat tmp/docker_pwd.txt) --basic-auth $(cat image_repo.txt)
+        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_repo.txt)
         docker-ls tags $(cat image_repo.txt)
         #cat image_found.txt
     else
