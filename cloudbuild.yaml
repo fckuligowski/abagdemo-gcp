@@ -41,8 +41,8 @@ steps:
         cat tmp/docker_user.txt
         cat tmp/docker_pwd.txt
         echo 
-        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_repo.txt)
-        docker-ls tags $(cat image_repo.txt)
+        docker-ls tag --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_name.txt) --json
+        docker-ls tag --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" fckuligowski/abagdemo-gcp:v1.1.9000 --json
         #cat image_found.txt
     else
         echo "Skipping further steps because the branch $BRANCH_NAME is not master."
