@@ -38,10 +38,10 @@ steps:
     #if test "$BRANCH_NAME" = "master"
     if test "$BRANCH_NAME" = "feature-branch"
     then 
-        DOCKER_USER=$(cat tmp/docker_user.txt)
-        DOCKER_PWD=$(cat tmp/docker_pwd.txt)
-        curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/
-        TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+        #DOCKER_USER=$(cat tmp/docker_user.txt)
+        #DOCKER_PWD=$(cat tmp/docker_pwd.txt)
+        #curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/
+        #TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
         curl --silent https://hub.docker.com/v2/repositories/$(cat image_repo.txt)/tags/$(cat image_tag.txt) -o tags.json
         jq -r .name tags.json > image_found.txt
         cat image_found.txt
