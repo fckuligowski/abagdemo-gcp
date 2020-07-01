@@ -38,7 +38,8 @@ steps:
   args: 
   - '-c'
   - |
-    if test "$BRANCH_NAME" = "master"
+    #if test "$BRANCH_NAME" = "master"
+    if test "$BRANCH_NAME" = "feature-branch"
     then 
         DOCKER_USER=$(cat tmp/docker_user.txt)
         DOCKER_PWD=$(cat tmp/docker_pwd.txt)
