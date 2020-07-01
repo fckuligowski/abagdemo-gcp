@@ -42,7 +42,7 @@ steps:
     then 
         DOCKER_USER=$(cat tmp/docker_user.txt)
         DOCKER_PWD=$(cat tmp/docker_pwd.txt)
-        TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'\${DOCKER_USER}'", "password": "'\${DOCKER_PWD}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+        TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'$\{DOCKER_USER\}'", "password": "'$\{DOCKER_PWD\}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
         echo $TOKEN
         curl --silent https://hub.docker.com/v2/repositories/$(cat image_repo.txt)/tags/$(cat image_tag.txt) -o tags.json
         jq -r .name tags.json > image_found.txt
