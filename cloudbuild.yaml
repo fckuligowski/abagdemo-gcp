@@ -38,7 +38,10 @@ steps:
     #if test "$BRANCH_NAME" = "master"
     if test "$BRANCH_NAME" = "feature-branch"
     then 
-        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" --basic-auth $(cat image_repo.txt)
+        cat tmp/docker_user.txt
+        cat tmp/docker_pwd.txt
+        #docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" --basic-auth $(cat image_repo.txt)
+        docker-ls tags $(cat image_repo.txt)
         #cat image_found.txt
     else
         echo "Skipping further steps because the branch $BRANCH_NAME is not master."
