@@ -95,8 +95,7 @@ steps:
   - |
     if test "$BRANCH_NAME" = "master"
     then 
-        #docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_repo.txt) > image_taglist.txt
-        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "wrongo" $(cat image_repo.txt) > image_taglist.txt || exit 1
+        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_repo.txt) > image_taglist.txt
         cat image_taglist.txt
         grep $(cat image_tag.txt) image_taglist.txt -o > image_found.txt
         cat image_found.txt
