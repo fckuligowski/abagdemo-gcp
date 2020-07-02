@@ -16,6 +16,64 @@ steps:
     echo $image_repo:$image_tag > image_name.txt
     cat image_name.txt
 
+# Build the application container
+- id: 'Build the application container'
+  name: 'gcr.io/cloud-builders/docker'
+  entrypoint: bash
+  args: 
+  - '-c'
+  - 'docker build -t ${_TMP_IMAGE} .'
+
+# Copy Test scripts to a volume so we can mount them in the app directory
+# and run the tests from there
+- id: 'Copy tests scripts'
+  name: 'bash'
+  volumes:
+  - name: 'testsvol'
+    path: '/persistent_volume/tests'
+  args: ['cp', '-R', 'tests', '/persistent_volume']
+
+# Get the credentials for accessing Google Storage, because the app needs those.
+# And for Git because we need those to add a new Tag to the Git repo.
+- id: 'Get GCP Creds'
+  name: 'gcr.io/cloud-builders/gcloud'
+  entrypoint: 'bash'
+  args: 
+  - '-c'
+  - |
+    mkdir -p tmp &&
+    gcloud secrets versions access latest --secret=${_GS_CREDS} > tmp/gs_creds.json &&
+    gcloud secrets versions access latest --secret=${_GIT_USER} > tmp/git_user.txt &&
+    gcloud secrets versions access latest --secret=${_GIT_PWD} > tmp/git_pwd.txt
+
+# Run the application Unit tests
+- id: 'Run Unit Tests'
+  name: ${_TMP_IMAGE}
+  volumes:
+  - name: 'testsvol'
+    path: '/abagdemo/tests'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+    /abagdemo/tests/testit.sh unit || exit 1
+  env:
+  - 'GOOGLE_APPLICATION_CREDENTIALS=tmp/gs_creds.json'
+
+# Run the application Functional tests
+- id: 'Run Functional Tests'
+  name: ${_TMP_IMAGE}
+  volumes:
+  - name: 'testsvol'
+    path: '/abagdemo/tests'
+  entrypoint: 'sh'
+  args: 
+  - '-c'
+  - |
+    /abagdemo/tests/testit.sh functional || exit 1
+  env:
+  - 'GOOGLE_APPLICATION_CREDENTIALS=tmp/gs_creds.json'
+
 # Get the credentials for Docker so we can push the container image there.
 - id: 'Get Docker Creds'
   name: 'gcr.io/cloud-builders/gcloud'
@@ -27,18 +85,18 @@ steps:
     gcloud secrets versions access latest --secret=${_DOCKER_USER} > tmp/docker_user.txt &&
     gcloud secrets versions access latest --secret=${_DOCKER_PWD} > tmp/docker_pwd.txt
 
-# Determine if an image has already been created with this tag,
-# but only if we're merging into the master branch.
+# Determine if an image has already been created with this tag
+# looking for it in Docker Hub, but only if we're merging into the master branch.
 - id: 'Search if Tag Exists'
   name: 'carinadigital/docker-ls'
   entrypoint: 'sh'
   args: 
   - '-c'
   - |
-    #if test "$BRANCH_NAME" = "master"
-    if test "$BRANCH_NAME" = "feature-branch"
+    if test "$BRANCH_NAME" = "master"
     then 
-        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_repo.txt) > image_taglist.txt
+        #docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "$(cat tmp/docker_pwd.txt)" $(cat image_repo.txt) > image_taglist.txt
+        docker-ls tags --user "$(cat tmp/docker_user.txt)" --password "wrongo" $(cat image_repo.txt) > image_taglist.txt
         cat image_taglist.txt
         grep $(cat image_tag.txt) image_taglist.txt -o > image_found.txt
         cat image_found.txt
@@ -46,7 +104,22 @@ steps:
         echo "Skipping further steps because the branch $BRANCH_NAME is not master."
     fi
 
-# HERE: Push the image to Google Container Repo, but only if that tag
+# Push the image to Docker Hub, but only if that tag
+# doesn't already exist
+- id: 'Push Image to Repo'
+  name: 'gcr.io/cloud-builders/docker'
+  entrypoint: 'bash'
+  args: 
+  - '-c'
+  - |
+    if test -f image_found.txt && test "$(cat image_found.txt)" != "$(cat image_tag.txt)"
+    then
+        echo $(cat tmp/docker_pwd.txt) | docker login --username $(cat tmp/docker_user.txt) --password-stdin || exit 1
+        docker tag ${_TMP_IMAGE} $(cat image_name.txt) || exit 1
+        docker push $(cat image_name.txt) || exit 1
+    else
+        echo "Skipped pushing Container Image to Registry"
+    fi
 
 # Add a new Tag to the GitHub repo, but only if that tag
 # doesn't already exist
@@ -68,7 +141,23 @@ steps:
         echo "Skipped creating Tag in Git"
     fi
 
-# HERE: Update the container image using kubectl set
+# Update the container image using helm
+- id: 'Update Image in k8s'
+  name: 'gcr.io/$PROJECT_ID/helm'
+  entrypoint: 'bash'
+  args:
+  - '-c'
+  - |
+    if test -f image_found.txt && test "$(cat image_found.txt)" != "$(cat image_tag.txt)"
+    then
+        gcloud container clusters get-credentials --project=$PROJECT_ID --zone=${_GKE_ZONE} ${_GKE_CLUSTER} || exit 1
+        helm upgrade ${_HELM_APP} ${_HELM_DIR} || exit 1
+    else
+        echo "Skipped updating Image in k8s"
+    fi
+  env:
+  - 'CLOUDSDK_COMPUTE_ZONE=${_GKE_ZONE}'
+  - 'CLOUDSDK_CONTAINER_CLUSTER=${_GKE_CLUSTER}'
   
 substitutions:
     # Name of our application.
