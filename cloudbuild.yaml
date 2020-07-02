@@ -85,8 +85,8 @@ steps:
     gcloud secrets versions access latest --secret=${_DOCKER_USER} > tmp/docker_user.txt &&
     gcloud secrets versions access latest --secret=${_DOCKER_PWD} > tmp/docker_pwd.txt
 
-# Determine if an image has already been created with this tag
-# looking for it in Docker Hub, but only if we're merging into the master branch.
+# See if an image has already been created with this tag in
+# Docker Hub, but only if we're merging into the master branch.
 - id: 'Search if Tag Exists'
   name: 'carinadigital/docker-ls'
   entrypoint: 'sh'
