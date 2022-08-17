@@ -1,0 +1,2 @@
+This is a file that I can use
+to test Git stuff with.
